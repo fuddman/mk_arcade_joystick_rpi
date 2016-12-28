@@ -235,10 +235,10 @@ static void i2c_write(char dev_addr, char reg_addr, char *buf, unsigned short le
 // Function to read a number of bytes into a  buffer from the FIFO of the I2C controller
 
 static void i2c_read(char dev_addr, char reg_addr, char *buf, unsigned short len) {
+    unsigned short bufidx;
 
     i2c_write(dev_addr, reg_addr, NULL, 0);
 
-    unsigned short bufidx;
     bufidx = 0;
 
     memset(buf, 0, len); // clear the buffer
