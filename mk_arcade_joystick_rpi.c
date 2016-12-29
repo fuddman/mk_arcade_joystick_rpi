@@ -163,20 +163,22 @@ struct mk_subdev {
 
 static struct mk *mk_base;
 
-static const int mk_max_arcade_buttons = 12;
+static const int mk_max_arcade_buttons = 14;
 
-// Map of the gpios :                     up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
-static const int mk_arcade_gpio_maps[] = {4,  17,    27,  22,    10,    9,      25, 24, 23, 18, 15, 14 };
+// Map of the gpios : 
+static const int mk_arcade_gpio_maps[] = {4, 14, 14, 27, 22, 17, 9, 10, 24, 25, 23, 23, 15, 18}; 
+
 // 2nd joystick on the b+ GPIOS                 up, down, left, right, start, select, a,  b,  tr, y,  x,  tl
-static const int mk_arcade_gpio_maps_bplus[] = {11, 5,    6,    13,    19,    26,     21, 20, 16, 12, 7,  8 };
-// Map of the mcp23017 on GPIOA            up, down, left, right, start, select
-static const int mk_arcade_gpioa_maps[] = {0,  1,    2,    3,     4,     5      };
+static const int mk_arcade_gpio_maps_bplus[] = {4, 14, 14, 27, 22, 17, 9, 10, 24, 25, 23, 23, 15, 18}; 
 
-// Map of the mcp23017 on GPIOB            a, b, tr, y, x, tl
-static const int mk_arcade_gpiob_maps[] = {0, 1, 2,  3, 4, 5 };
+// Map of the mcp23017 on GPIOA            b, a, r2, r1, x, y 
+static const int mk_arcade_gpioa_maps[] = {2, 3,  4,  5, 6, 7 };
+
+// Map of the mcp23017 on GPIOB            up, L1, L2, left, right, down, select, start 
+static const int mk_arcade_gpiob_maps[] = { 0,  1,  2,    3,     4,    5,      6,     7 };
 
 static const short mk_arcade_gpio_btn[] = {
-    BTN_START, BTN_SELECT, BTN_A, BTN_B, BTN_TR, BTN_Y, BTN_X, BTN_TL
+    BTN_NORTH, BTN_TL, BTN_TL2, BTN_WEST, BTN_EAST, BTN_SOUTH, BTN_SELECT, BTN_START, BTN_B, BTN_A, BTN_TR2, BTN_TR, BTN_X, BTN_Y
 };
 
 static const char *mk_names[] = {
@@ -266,17 +268,14 @@ static void mk_mcp23017_read_packet(struct mk_pad * pad, unsigned char *data) {
     i2c_read(pad->mcp23017addr, MPC23017_GPIOA_READ, &resultA, 1);
     i2c_read(pad->mcp23017addr, MPC23017_GPIOB_READ, &resultB, 1);
 
-    // read direction
-    for (i = 0; i < 4; i++) {
-        data[i] = !((resultA >> mk_arcade_gpioa_maps[i]) & 0x1);
+    // Read gpiob first because all of its pins are used
+    for (i = 0; i < 8; i++) {
+        data[i] = !((resultB >> (mk_arcade_gpiob_maps[i])) & 0x1);
     }
+
     // read buttons on gpioa
-    for (i = 4; i < 6; i++) {
-        data[i] = !((resultA >> mk_arcade_gpioa_maps[i]) & 0x1);
-    }
-    // read buttons on gpiob
-    for (i = 6; i < 12; i++) {
-        data[i] = !((resultB >> (mk_arcade_gpiob_maps[i-6])) & 0x1);
+    for (i = 0; i < 6; i++) {
+        data[i+8] = !((resultA >> mk_arcade_gpioa_maps[i]) & 0x1);
     }
 }
 
@@ -301,10 +300,8 @@ static void mk_gpio_read_packet(struct mk_pad * pad, unsigned char *data) {
 static void mk_input_report(struct mk_pad * pad, unsigned char * data) {
     struct input_dev * dev = pad->dev;
     int j;
-    input_report_abs(dev, ABS_Y, !data[0]-!data[1]);
-    input_report_abs(dev, ABS_X, !data[2]-!data[3]);
-    for (j = 4; j < mk_max_arcade_buttons; j++) {
-        input_report_key(dev, mk_arcade_gpio_btn[j - 4], data[j]);
+    for (j = 0; j < mk_max_arcade_buttons; j++) {
+        input_report_key(dev, mk_arcade_gpio_btn[j], data[j]);
     }
     input_sync(dev);
 }
@@ -410,9 +407,7 @@ static int __init mk_setup_pad(struct mk *mk, int idx, int pad_type_arg) {
 
     input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 
-    for (i = 0; i < 2; i++)
-        input_set_abs_params(input_dev, ABS_X + i, -1, 1, 0, 0);
-    for (i = 0; i < mk_max_arcade_buttons - 4; i++)
+    for (i = 0; i < mk_max_arcade_buttons; i++)
         __set_bit(mk_arcade_gpio_btn[i], input_dev->keybit);
 
     mk->pad_count[pad_type]++;
