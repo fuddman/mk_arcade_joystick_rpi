@@ -178,7 +178,7 @@ static const int mk_arcade_gpioa_maps[] = {2, 3,  4,  5, 6, 7 };
 static const int mk_arcade_gpiob_maps[] = { 0,  1,  2,    3,     4,    5,      6,     7 };
 
 static const short mk_arcade_gpio_btn[] = {
-    BTN_NORTH, BTN_TL, BTN_TL2, BTN_WEST, BTN_EAST, BTN_SOUTH, BTN_SELECT, BTN_START, BTN_B, BTN_A, BTN_TR2, BTN_TR, BTN_X, BTN_Y
+    BTN_DPAD_UP, BTN_TL, BTN_TL2, BTN_DPAD_LEFT, BTN_DPAD_RIGHT, BTN_DPAD_DOWN, BTN_SELECT, BTN_START, BTN_B, BTN_A, BTN_TR2, BTN_TR, BTN_X, BTN_Y
 };
 
 static const char *mk_names[] = {
